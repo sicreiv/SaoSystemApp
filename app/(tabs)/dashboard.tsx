@@ -7,18 +7,25 @@ export default function DashboardScreen() {
 
   const handleLogout = () => {
     Alert.alert('Logged out');
-    router.push('/(tabs)'); 
+    router.push('/(tabs)');
   };
 
   return (
     <View style={styles.container}>
-      <Image source={require('../../assets/images/CTU_logo.png')} style={styles.logo} />
-      <Text style={styles.title}>Student Affairs and Services Offices</Text>
-      <Text style={styles.subtitle}>Cebu Technological University - Argao Campus</Text>
-      <Text style={styles.welcome}>Welcome to the Homepage!</Text>
-      <TouchableOpacity style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Logout</Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <Image source={require('../../assets/images/CTU_logo.png')} style={styles.logo} />
+        <Text style={styles.title}>Student Affairs and Services</Text>
+        <Text style={styles.subtitle}>Cebu Technological University - Argao Campus</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.welcome}>Welcome to your Dashboard 👋</Text>
+        <Text style={styles.desc}>Here you can access different services and information easily.</Text>
+
+        <TouchableOpacity style={styles.button} onPress={handleLogout}>
+          <Text style={styles.buttonText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -26,42 +33,64 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#1e3a8a',
+  },
+  header: {
+    alignItems: 'center',
+    marginTop: 60,
+    marginBottom: 20,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 20,
+    width: 90,
+    height: 90,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1e3a8a',
     textAlign: 'center',
-    marginBottom: 10,
-    color: '#ffffff',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 15,
+    color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#ffffff',
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+    alignItems: 'center',
   },
   welcome: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  desc: {
+    fontSize: 15,
+    color: '#6b7280',
+    textAlign: 'center',
     marginBottom: 20,
-    color: '#ffffff',
   },
   button: {
-    backgroundColor: '#2563eb',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
+    backgroundColor: '#1e3a8a',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
   },
   buttonText: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: '600',
   },
 });
