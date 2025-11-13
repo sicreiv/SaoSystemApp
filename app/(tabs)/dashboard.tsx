@@ -1,96 +1,173 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  ImageBackground,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
 
   const handleLogout = () => {
     Alert.alert('Logged out');
     router.push('/(tabs)');
   };
 
+  const isMobile = width < 600;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Image source={require('../../assets/images/CTU_logo.png')} style={styles.logo} />
-        <Text style={styles.title}>Student Affairs and Services</Text>
-        <Text style={styles.subtitle}>Cebu Technological University - Argao Campus</Text>
-      </View>
+    <ImageBackground
+      source={require('../../assets/images/CTUAC.jpg')}
+      style={[styles.background, { width, height }]}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/images/CTU_logo.png')}
+            style={[
+              styles.logo,
+              { width: isMobile ? 80 : 130, height: isMobile ? 80 : 130 },
+              ]}
+            />
 
-      <View style={styles.card}>
-        <Text style={styles.welcome}>Welcome to your Dashboard 👋</Text>
-        <Text style={styles.desc}>Here you can access different services and information easily.</Text>
+          <Text
+            style={[
+              styles.title,
+              { fontSize: isMobile ? 20 : 28, textAlign: 'center' },
+            ]}
+          >
+            Student Affairs and Services
+          </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              { fontSize: isMobile ? 14 : 18, textAlign: 'center' },
+            ]}
+          >
+            Cebu Technological University - Argao Campus
+          </Text>
+        </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogout}>
-          <Text style={styles.buttonText}>Logout</Text>
-        </TouchableOpacity>
+        {/* Card */}
+        <View
+          style={[
+            styles.card,
+            {
+              width: isMobile ? '90%' : '60%',
+              padding: isMobile ? 20 : 30,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.welcome,
+              { fontSize: isMobile ? 16 : 20, textAlign: 'center' },
+            ]}
+          >
+            Welcome to your Dashboard 👋
+          </Text>
+          <Text
+            style={[
+              styles.desc,
+              { fontSize: isMobile ? 14 : 16, textAlign: 'center' },
+            ]}
+          >
+            Here you can access different services and information easily.
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {
+                paddingVertical: isMobile ? 10 : 14,
+                paddingHorizontal: isMobile ? 25 : 40,
+              },
+            ]}
+            onPress={handleLogout}
+          >
+            <Text
+              style={[styles.buttonText, { fontSize: isMobile ? 15 : 18 }]}
+            >
+              Logout
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
     alignItems: 'center',
+    ...(Platform.OS === 'web' && {
+      backgroundSize: 'cover',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+    }),
+  },
+  
+  overlay: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     padding: 20,
   },
+
   header: {
     alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   logo: {
-    width: 90,
-    height: 90,
-    marginBottom: 10,
+    marginBottom: 12,
+    resizeMode: 'contain',
   },
   title: {
-    fontSize: 22,
     fontWeight: '700',
-    color: '#1e3a8a',
-    textAlign: 'center',
+    color: '#ffffff',
   },
   subtitle: {
-    fontSize: 15,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: '#f3f4f6',
+    marginTop: 4,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 380,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
+    shadowOpacity: Platform.OS === 'web' ? 0.1 : 0.15,
     shadowRadius: 6,
-    elevation: 4,
+    elevation: 6,
     alignItems: 'center',
   },
   welcome: {
-    fontSize: 18,
     fontWeight: '600',
-    color: '#1f2937',
+    color: '#111827',
     marginBottom: 8,
   },
   desc: {
-    fontSize: 15,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: '#374151',
     marginBottom: 20,
   },
   button: {
     backgroundColor: '#1e3a8a',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
     borderRadius: 10,
   },
   buttonText: {
     color: '#ffffff',
-    fontSize: 16,
     fontWeight: '600',
   },
 });
