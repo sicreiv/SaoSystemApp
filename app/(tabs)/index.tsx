@@ -1,19 +1,42 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { auth } from '../../firebase';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
 
-  const handleLogin = () => {
-    if (!email || !password) {
+  useEffect(() => {
+    console.log('LoginScreen mounted');
+  }, []);
+
+  const handleLogin = async () => {
+    console.log('Login button pressed');
+
+    const trimmedEmail = email.trim(); // Remove spaces
+    if (!trimmedEmail || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    Alert.alert('Success', 'Logged in!');
-    router.push('/(tabs)/dashboard');
+
+    // Simple email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, trimmedEmail, password);
+      Alert.alert('Success', 'Logged in successfully!');
+      router.push('/(tabs)/dashboard');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert('Login error', error.message);
+    }
   };
 
   const handleRegisterRedirect = () => {
@@ -47,13 +70,15 @@ export default function LoginScreen() {
           placeholderTextColor="#9ca3af"
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Pressable style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity onPress={handleRegisterRedirect}>
-          <Text style={styles.footerText}>Don’t have an account? <Text style={styles.link}>Register</Text></Text>
-        </TouchableOpacity>
+        <Pressable onPress={handleRegisterRedirect}>
+          <Text style={styles.footerText}>
+            Don’t have an account? <Text style={styles.link}>Register</Text>
+          </Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );

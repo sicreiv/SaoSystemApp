@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { auth } from '../../firebase';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -8,8 +10,10 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const router = useRouter();
 
-  const handleRegister = () => {
-    if (!email || !password || !confirmPassword) {
+  const handleRegister = async () => {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -17,8 +21,21 @@ export default function RegisterScreen() {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-    Alert.alert('Success', 'Registered!');
-    router.push('/(tabs)/dashboard');
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    try {
+      await createUserWithEmailAndPassword(auth, trimmedEmail, password);
+      Alert.alert('Success', 'Registered successfully!');
+      router.push('/');
+    } catch (error: any) {
+      console.error('Register error:', error);
+      Alert.alert('Register error', error.message);
+    }
   };
 
   const handleLoginRedirect = () => {
@@ -65,7 +82,9 @@ export default function RegisterScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleLoginRedirect}>
-          <Text style={styles.footerText}>Already have an account? <Text style={styles.link}>Login</Text></Text>
+          <Text style={styles.footerText}>
+            Already have an account? <Text style={styles.link}>Login</Text>
+          </Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
