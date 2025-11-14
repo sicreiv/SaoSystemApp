@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -19,38 +18,59 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // NEW VALIDATION STATES
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [passwordValid, setPasswordValid] = useState<boolean | null>(null);
+
   const router = useRouter();
 
+  const validateEmail = (value: string) => {
+    setEmail(value);
+    const trimmed = value.trim();
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!trimmed) {
+      setEmailError('Email is required');
+      setEmailValid(false);
+    } else if (!regex.test(trimmed)) {
+      setEmailError('Invalid email format');
+      setEmailValid(false);
+    } else {
+      setEmailError('');
+      setEmailValid(true);
+    }
+  };
+
+  const validatePassword = (value: string) => {
+    setPassword(value);
+
+    if (!value) {
+      setPasswordError('Password is required');
+      setPasswordValid(false);
+    } else if (value.length < 8) {
+      setPasswordError('Must be at least 8 characters');
+      setPasswordValid(false);
+    } else if (value.includes(' ')) {
+      setPasswordError('Password cannot contain spaces');
+      setPasswordValid(false);
+    } else {
+      setPasswordError('');
+      setPasswordValid(true);
+    }
+  };
+
   const handleLogin = async () => {
-    const trimmedEmail = email.trim();
-
-    if (!trimmedEmail || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
-    }
-
-    if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
-      return;
-    }
-    if (password.includes(" ")) {
-      Alert.alert("Error", "Password cannot contain spaces");
-      return;
-    }
+    if (emailValid !== true || passwordValid !== true) return;
 
     try {
-      await signInWithEmailAndPassword(auth, trimmedEmail, password);
-      Alert.alert('Success', 'Logged in successfully!');
+      await signInWithEmailAndPassword(auth, email.trim(), password);
       router.push('/(tabs)/dashboard');
     } catch (error: any) {
-      console.error('Login error:', error);
-      Alert.alert('Login error', error.message);
+      setPasswordError('Incorrect email or password');
+      setPasswordValid(false);
     }
   };
 
@@ -60,32 +80,45 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.card}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.title}>Cebu Technological University</Text>
+        <Text style={styles.subtitle}>Sign in</Text>
 
-        {/* Email Field */}
-        <View style={styles.inputWrapper}>
+        {/* EMAIL FIELD */}
+        <View
+          style={[
+            styles.inputWrapper,
+            emailValid === false && styles.inputError,
+            emailValid === true && styles.inputSuccess,
+          ]}
+        >
           <Ionicons name="mail-outline" size={20} color="#6b7280" />
           <TextInput
             style={styles.input}
             placeholder="Email"
             placeholderTextColor="#9ca3af"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={validateEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
         </View>
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
-        {/* Password Field */}
-        <View style={styles.inputWrapper}>
+        {/* PASSWORD FIELD */}
+        <View
+          style={[
+            styles.inputWrapper,
+            passwordValid === false && styles.inputError,
+            passwordValid === true && styles.inputSuccess,
+          ]}
+        >
           <Ionicons name="lock-closed-outline" size={20} color="#6b7280" />
           <TextInput
             style={styles.input}
             placeholder="Password"
             placeholderTextColor="#9ca3af"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={validatePassword}
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -96,19 +129,20 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
-        {/* Login Button */}
+        {/* LOGIN BUTTON */}
         <Pressable
-          style={[styles.button, (!email || !password) && styles.buttonDisabled]}
+          style={[styles.button, !(emailValid && passwordValid) && styles.buttonDisabled]}
           onPress={handleLogin}
-          disabled={!email || !password}
+          disabled={!(emailValid && passwordValid)}
         >
           <Text style={styles.buttonText}>Sign In</Text>
         </Pressable>
 
         <TouchableOpacity onPress={() => router.push('/register')}>
           <Text style={styles.footerText}>
-            Don’t have an account? <Text style={styles.link}>Register</Text>
+            Don’t have an account? Contact your administrator.<Text style={styles.link}>Register</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -136,13 +170,14 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1e3a8a',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#363636ff',
     textAlign: 'center',
   },
   subtitle: {
     color: '#6b7280',
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 28,
     fontSize: 15,
@@ -155,20 +190,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     borderRadius: 12,
     paddingHorizontal: 14,
-    marginBottom: 16,
+    marginBottom: 6,
     height: 50,
   },
+
+  /* VALIDATION COLORS */
+  inputError: {
+    borderColor: '#dc2626', // red
+  },
+  inputSuccess: {
+    borderColor: '#16a34a', // green
+  },
+
   input: {
     flex: 1,
     fontSize: 16,
     marginLeft: 8,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 12,
+    marginBottom: 12,
+    marginLeft: 4,
   },
   button: {
     backgroundColor: '#1e3a8a',
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 14,
   },
   buttonDisabled: {
     backgroundColor: '#93c5fd',

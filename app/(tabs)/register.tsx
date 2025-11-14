@@ -1,134 +1,172 @@
 import { useRouter } from 'expo-router';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import { auth } from '../../firebase';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState<'error' | 'success' | ''>('');
+
+  // VALIDATION STATES
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmError, setConfirmError] = useState('');
+
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [passwordValid, setPasswordValid] = useState<boolean | null>(null);
+  const [confirmValid, setConfirmValid] = useState<boolean | null>(null);
 
   const router = useRouter();
 
-  const handleRegister = async () => {
-    const trimmedEmail = email.trim();
+  // VALIDATE EMAIL
+  const validateEmail = (value: string) => {
+    setEmail(value);
+    const trimmed = value.trim();
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    setMessage('');
-    setMessageType('');
+    if (!trimmed) {
+      setEmailError('Email is required');
+      setEmailValid(false);
+    } else if (!regex.test(trimmed)) {
+      setEmailError('Invalid email format');
+      setEmailValid(false);
+    } else {
+      setEmailError('');
+      setEmailValid(true);
+    }
+  };
 
-    if (!trimmedEmail || !password || !confirmPassword) {
-      setMessage('Please fill in all fields.');
-      setMessageType('error');
-      return;
+  // VALIDATE PASSWORD
+  const validatePassword = (value: string) => {
+    setPassword(value);
+
+    if (!value) {
+      setPasswordError('Password is required');
+      setPasswordValid(false);
+    } else if (value.length < 8) {
+      setPasswordError('Must be at least 8 characters');
+      setPasswordValid(false);
+    } else if (value.includes(' ')) {
+      setPasswordError('Password cannot contain spaces');
+      setPasswordValid(false);
+    } else {
+      setPasswordError('');
+      setPasswordValid(true);
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setMessage('Please enter a valid email address.');
-      setMessageType('error');
-      return;
+    // validate confirm password again
+    if (confirmPassword) validateConfirm(confirmPassword);
+  };
+
+  // VALIDATE CONFIRM PASSWORD
+  const validateConfirm = (value: string) => {
+    setConfirmPassword(value);
+
+    if (!value) {
+      setConfirmError('Please confirm your password');
+      setConfirmValid(false);
+    } else if (value !== password) {
+      setConfirmError('Passwords do not match');
+      setConfirmValid(false);
+    } else {
+      setConfirmError('');
+      setConfirmValid(true);
     }
+  };
 
-    if (password.length < 8) {
-      setMessage('Password must be at least 8 characters long.');
-      setMessageType('error');
-      return;
-    }
+  // ON REGISTER BUTTON
+  const handleRegister = () => {
+    if (emailValid !== true || passwordValid !== true || confirmValid !== true) return;
 
-    if (password !== confirmPassword) {
-      setMessage('Passwords do not match.');
-      setMessageType('error');
-      return;
-    }
-
-    try {
-      await createUserWithEmailAndPassword(auth, trimmedEmail, password);
-
-      setMessage('Account created successfully! You can now log in.');
-      setMessageType('success');
-
-      setTimeout(() => {
-        router.push('/');
-      }, 1000);
-
-    } catch (error: any) {
-      console.error('Register error:', error);
-      setMessage(error.message);
-      setMessageType('error');
-    }
+    Alert.alert('Success', 'Registered!');
+    router.push('/(tabs)/dashboard');
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.card}>
-
         <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Fill in your details to continue</Text>
+        <Text style={styles.subtitle}>Join and get started</Text>
 
-        {/*  Validation Message */}
-        {message !== '' && (
-          <Text
-            style={[
-              styles.validationMessage,
-              messageType === 'error' ? styles.errorText : styles.successText,
-            ]}
-          >
-            {message}
-          </Text>
-        )}
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
+        {/* EMAIL FIELD */}
+        <View
+          style={[
+            styles.input,
+            emailValid === false && styles.inputError,
+            emailValid === true && styles.inputSuccess,
+          ]}
+        >
           <TextInput
-            style={styles.input}
-            placeholder="example@gmail.com"
+            style={{ flex: 1 }}
+            placeholder="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={validateEmail}
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#9ca3af"
           />
         </View>
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
+        {/* PASSWORD */}
+        <View
+          style={[
+            styles.input,
+            passwordValid === false && styles.inputError,
+            passwordValid === true && styles.inputSuccess,
+          ]}
+        >
           <TextInput
-            style={styles.input}
-            placeholder="Minimum 8 characters"
+            style={{ flex: 1 }}
+            placeholder="Password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={validatePassword}
             secureTextEntry
             placeholderTextColor="#9ca3af"
           />
         </View>
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Confirm Password</Text>
+        {/* CONFIRM PASSWORD */}
+        <View
+          style={[
+            styles.input,
+            confirmValid === false && styles.inputError,
+            confirmValid === true && styles.inputSuccess,
+          ]}
+        >
           <TextInput
-            style={styles.input}
-            placeholder="Re-enter your password"
+            style={{ flex: 1 }}
+            placeholder="Confirm Password"
             value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            onChangeText={validateConfirm}
             secureTextEntry
             placeholderTextColor="#9ca3af"
           />
         </View>
+        {confirmError ? <Text style={styles.errorText}>{confirmError}</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        {/* BUTTON */}
+        <TouchableOpacity
+          style={[
+            styles.button,
+            !(emailValid && passwordValid && confirmValid) && styles.buttonDisabled,
+          ]}
+          onPress={handleRegister}
+          disabled={!(emailValid && passwordValid && confirmValid)}
+        >
           <Text style={styles.buttonText}>Register</Text>
         </TouchableOpacity>
 
@@ -137,7 +175,6 @@ export default function RegisterScreen() {
             Already have an account? <Text style={styles.link}>Login</Text>
           </Text>
         </TouchableOpacity>
-
       </View>
     </KeyboardAvoidingView>
   );
@@ -146,99 +183,84 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#eef2ff',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f3f4f6',
     padding: 20,
   },
-
   card: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 380,
     backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 28,
-    shadowColor: '#1e3a8a',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
   },
-
   title: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '700',
     color: '#1e3a8a',
     textAlign: 'center',
-    marginBottom: 6,
   },
-
   subtitle: {
-    color: '#64748b',
+    color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 8,
-    fontSize: 14,
+    marginBottom: 24,
   },
 
-  validationMessage: {
-    textAlign: 'center',
-    fontSize: 15,
-    marginBottom: 18,
-    fontWeight: '600',
+  /* INPUT STYLES */
+  input: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    marginBottom: 6,
+    backgroundColor: '#f9fafb',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  /* VALIDATION COLORS */
+  inputError: {
+    borderColor: '#dc2626', // red
+  },
+  inputSuccess: {
+    borderColor: '#16a34a', // green
   },
 
   errorText: {
     color: '#dc2626',
-  },
-
-  successText: {
-    color: '#16a34a',
-  },
-
-  inputGroup: {
-    marginBottom: 18,
-  },
-
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 6,
-    color: '#1e3a8a',
-  },
-
-  input: {
-    height: 48,
-    borderWidth: 1.4,
-    borderColor: '#c7d2fe',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    backgroundColor: '#f8fafc',
-    fontSize: 16,
+    fontSize: 12,
+    marginBottom: 10,
+    marginLeft: 4,
   },
 
   button: {
     backgroundColor: '#1e3a8a',
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 12,
   },
-
+  buttonDisabled: {
+    backgroundColor: '#93c5fd',
+  },
   buttonText: {
     color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '600',
   },
-
   footerText: {
     textAlign: 'center',
-    color: '#475569',
-    marginTop: 12,
-    fontSize: 15,
+    color: '#6b7280',
+    marginTop: 20,
   },
-
   link: {
     color: '#1e3a8a',
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });
