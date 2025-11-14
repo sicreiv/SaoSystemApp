@@ -1,31 +1,46 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { auth } from '../../firebase';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    console.log('LoginScreen mounted');
-  }, []);
-
   const handleLogin = async () => {
-    console.log('Login button pressed');
+    const trimmedEmail = email.trim();
 
-    const trimmedEmail = email.trim(); // Remove spaces
     if (!trimmedEmail || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
-    // Simple email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
+      return;
+    }
+    if (password.includes(" ")) {
+      Alert.alert("Error", "Password cannot contain spaces");
       return;
     }
 
@@ -39,46 +54,63 @@ export default function LoginScreen() {
     }
   };
 
-  const handleRegisterRedirect = () => {
-    router.push('/register');
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.card}>
         <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Login to continue</Text>
+        <Text style={styles.subtitle}>Sign in to continue</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          placeholderTextColor="#9ca3af"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor="#9ca3af"
-        />
+        {/* Email Field */}
+        <View style={styles.inputWrapper}>
+          <Ionicons name="mail-outline" size={20} color="#6b7280" />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#9ca3af"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
 
-        <Pressable style={styles.button} onPress={handleLogin}>
+        {/* Password Field */}
+        <View style={styles.inputWrapper}>
+          <Ionicons name="lock-closed-outline" size={20} color="#6b7280" />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#9ca3af"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Ionicons
+              name={showPassword ? "eye-outline" : "eye-off-outline"}
+              size={20}
+              color="#6b7280"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Login Button */}
+        <Pressable
+          style={[styles.button, (!email || !password) && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={!email || !password}
+        >
           <Text style={styles.buttonText}>Sign In</Text>
         </Pressable>
 
-        <Pressable onPress={handleRegisterRedirect}>
+        <TouchableOpacity onPress={() => router.push('/register')}>
           <Text style={styles.footerText}>
             Don’t have an account? <Text style={styles.link}>Register</Text>
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -89,60 +121,71 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#eef2ff',
     padding: 20,
   },
   card: {
     width: '100%',
     maxWidth: 380,
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 18,
+    padding: 28,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.09,
     shadowRadius: 6,
-    elevation: 4,
+    elevation: 5,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: '#1e3a8a',
     textAlign: 'center',
   },
   subtitle: {
     color: '#6b7280',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
+    fontSize: 15,
   },
-  input: {
-    height: 48,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    marginBottom: 14,
     backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+    height: 50,
+  },
+  input: {
+    flex: 1,
     fontSize: 16,
+    marginLeft: 8,
   },
   button: {
     backgroundColor: '#1e3a8a',
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 13,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: '#93c5fd',
   },
   buttonText: {
     color: '#ffffff',
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   footerText: {
     textAlign: 'center',
     color: '#6b7280',
-    marginTop: 20,
+    marginTop: 22,
+    fontSize: 14,
   },
   link: {
     color: '#1e3a8a',
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
